@@ -18,4 +18,6 @@ Maturitni projekt chytrý kvetinac
 - https://www.instructables.com/Fyt%C3%B3-Turn-Your-Plant-Into-Pet/
 
 
-//ESP32-cam
+
+### poznámky
+ESP32-cam
