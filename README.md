@@ -21,6 +21,4 @@ Maturitni projekt chytrý kvetinac
 
 
 ### poznámky
-ESP32-cam
-spiffs web server
-pio run upload fs
+- spiffs
