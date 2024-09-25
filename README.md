@@ -11,6 +11,7 @@ Maturitni projekt chytrý kvetinac
 - automatické zavlažování
 - Displej
 - webový server s grafy
+- Předvolby pro jednotlivé květiny
 
 
 
@@ -20,4 +21,4 @@ Maturitni projekt chytrý kvetinac
 
 
 ### poznámky
-ESP32-cam
+- spiffs
