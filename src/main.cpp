@@ -5,6 +5,7 @@
 
 #define DHTPIN 0        // DHT senzor je připojen na GPIO0 (D3 na Wemos D1 Mini)
 #define DHTTYPE DHT11   // Používáte DHT11 senzor
+#define WATER_SENSOR_PIN A0 // Pin pro analogový Water Level Sensor
 
 DHT dht(DHTPIN, DHTTYPE);  // Inicializace DHT senzoru
 
@@ -13,13 +14,13 @@ int LED = LED_BUILTIN;
 char on = LOW;
 char off = HIGH;
 
-
 WiFiServer server(80);  // Inicializace webového serveru na portu 80
 
 void setup() {
   Serial.begin(115200);
   pinMode(LED, OUTPUT);
   digitalWrite(LED, off);
+  pinMode(WATER_SENSOR_PIN, INPUT); // Nastavení pinu pro Water Level Sensor jako vstup
 
   // Inicializace DHT senzoru
   dht.begin();
@@ -61,10 +62,15 @@ void loop() {
   Serial.print(humidity);
   Serial.println(" %");
 
+  // Čtení hodnoty z Water Level Sensor (analogové čtení)
+  int waterLevel = analogRead(WATER_SENSOR_PIN);
+  Serial.print("Water Level Sensor: ");
+  Serial.println(waterLevel); // Zobrazí hodnotu mezi 0-1023
+
   delay(1000);  // Zpoždění 1 sekunda
 
   WiFiClient client = server.available();
-  if (!client) {
+  if(!client) {
     return;
   }
   Serial.println("Waiting for new client");
@@ -100,6 +106,12 @@ void loop() {
   client.print("<p>Humidity: ");
   client.print(humidity);
   client.println(" %</p>");
+
+  // Zobrazení hodnoty senzoru hladiny vody
+  client.print("<p>Hladina vody (analog): ");
+  client.print(waterLevel);
+  client.println("</p>");
+
   client.println("<p><a href=\"/LEDON\">Turn ON LED</a></p>");
   client.println("<p><a href=\"/LEDOFF\">Turn OFF LED</a></p>");
   client.println("</html>");
