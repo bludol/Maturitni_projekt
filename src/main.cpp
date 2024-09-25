@@ -1,103 +1,106 @@
 #include <ESP8266WiFi.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include "password.h"
 
+#define DHTPIN 0        // DHT senzor je připojen na GPIO0 (D3 na Wemos D1 Mini)
+#define DHTTYPE DHT11   // Používáte DHT11 senzor
 
+DHT dht(DHTPIN, DHTTYPE);  // Inicializace DHT senzoru
 
 int state = LOW;
 int LED = LED_BUILTIN;
 char on = LOW;
 char off = HIGH;
 
-const char* ssid = "O2-Internet-425";//your-ssid
-const char* password = "jYEHa5SX";//your-password
 
-WiFiServer server(80);
+WiFiServer server(80);  // Inicializace webového serveru na portu 80
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   pinMode(LED, OUTPUT);
   digitalWrite(LED, off);
 
+  // Inicializace DHT senzoru
+  dht.begin();
+
   Serial.print("Connecting");
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("WiFi connected");  
-  server.begin();  // Starts the Server
+  Serial.println("WiFi connected");
+  server.begin();  // Start serveru
   Serial.println("Server started");
 
-  Serial.print("IP Address of network: "); // Prints IP address on Serial Monitor
+  Serial.print("IP Address of network: ");  // Zobrazení IP adresy na sériovém monitoru
   Serial.println(WiFi.localIP());
-  Serial.print("Copy and paste the following URL: https://");
+  Serial.print("Copy and paste the following URL: http://");
   Serial.print(WiFi.localIP());
   Serial.println("/");
 }
 
-void loop()
-{
+void loop() {
+  // Načtení teploty a vlhkosti z DHT senzoru
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  // Kontrola, zda se data načetla správně
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Nepodařilo se načíst data ze senzoru DHT!");
+    return;
+  }
+
+  // Výpis teploty a vlhkosti na sériový monitor
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" *C");
+  
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  delay(1000);  // Zpoždění 1 sekunda
+
   WiFiClient client = server.available();
-  if (!client)
-  {
+  if (!client) {
     return;
   }
   Serial.println("Waiting for new client");
-  while(!client.available())
-  {
+  while(!client.available()) {
     delay(1);
   }
 
+  // Zpracování HTTP požadavků
   String request = client.readStringUntil('\r');
   Serial.println(request);
   client.flush();
 
-  
-  if(request.indexOf("/LEDON") != -1)
-  {
-    digitalWrite(LED, on); // Turn ON LED
+  // Zapnutí a vypnutí LED
+  if (request.indexOf("/LEDON") != -1) {
+    digitalWrite(LED, on);  // Zapnout LED
     state = on;
   }
-  if(request.indexOf("/LEDOFF") != -1)
-  {
-    digitalWrite(LED, off); // Turn OFF LED
+  if (request.indexOf("/LEDOFF") != -1) {
+    digitalWrite(LED, off);  // Vypnout LED
     state = off;
   }
 
-/*------------------HTML Page Creation---------------------*/
-
-  client.println("HTTP/1.1 200 OK"); // standalone web server with an ESP8266
+  // Odpověď webového serveru
+  client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: text/html");
   client.println("");
   client.println("<!DOCTYPE HTML>");
   client.println("<html>");
-
-  client.println("<head>");
-  client.println("<title>LED TOGGLE</title>");
-  client.println("</head>");
-  client.print("<body>");
-  client.println("<header id=\"main-header\">");
-  client.println("<h1>LED TOGGLE</h1>");
-  client.println("</header>");
-
-  client.println("<div style=\"margin-left: 25px; \">");
-  if(state == on)
-  {
-    client.print("OFF");
-  }
-  else
-  {
-    client.print("ON");
-  }
-  client.println("</div>");
-  client.print("<br>");
-  client.println("<a href=\"/LEDON\"\"><button class=\"button\">OFF</button></a>");
-  client.println("<a href=\"/LEDOFF\"\"><button class=\"button\">ON</button></a>");
-  client.print("</body>");
+  client.println("<h1>ESP8266 DHT11 Sensor</h1>");
+  client.print("<p>Temperature: ");
+  client.print(temperature);
+  client.println(" &deg;C</p>");
+  client.print("<p>Humidity: ");
+  client.print(humidity);
+  client.println(" %</p>");
+  client.println("<p><a href=\"/LEDON\">Turn ON LED</a></p>");
+  client.println("<p><a href=\"/LEDOFF\">Turn OFF LED</a></p>");
   client.println("</html>");
-
-  delay(1);
-  Serial.println("Client disonnected");
-  Serial.println("");
 }
