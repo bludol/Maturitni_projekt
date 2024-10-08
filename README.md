@@ -22,3 +22,4 @@ Maturitni projekt chytrý kvetinac
 
 ### poznámky
 - spiffs
+- https://github.com/maakbaas/esp8266-iot-framework?tab=readme-ov-file
