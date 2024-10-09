@@ -23,3 +23,4 @@ Maturitni projekt chytrý kvetinac
 ### poznámky
 - spiffs
 - https://www.youtube.com/watch?v=pgGpuws7f9o
+- https://www.youtube.com/watch?v=Ix3a3ThsHfA
