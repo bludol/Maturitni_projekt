@@ -24,3 +24,4 @@ Maturitni projekt chytrý kvetinac
 - spiffs
 - https://www.youtube.com/watch?v=pgGpuws7f9o
 - https://www.youtube.com/watch?v=Ix3a3ThsHfA
+- https://github.com/letscontrolit/ESPEasy/tree/mega
