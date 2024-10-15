@@ -73,7 +73,7 @@ void loop() {
     int waterLevel = analogRead(WATER_SENSOR_PIN);
 
     // Zpracování HTTP požadavků
-    WiFiClient client = server.available(); // Použití available() namísto accept()
+    WiFiClient client = server.accept(); // Použití available() namísto accept()
     if (!client) {
         return;
     }
