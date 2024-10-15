@@ -1,7 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
-#include "password.h"
+#include <LittleFS.h> // Knihovna pro práci s LittleFS
+#include "password.h" // Tento soubor by měl obsahovat definice ssid a password
 
 #define DHTPIN 0        // DHT senzor je připojen na GPIO0 (D3 na Wemos D1 Mini)
 #define DHTTYPE DHT11   // Používáte DHT11 senzor
@@ -9,110 +10,135 @@
 
 DHT dht(DHTPIN, DHTTYPE);  // Inicializace DHT senzoru
 
-int state = LOW;
-int LED = LED_BUILTIN;
-char on = LOW;
-char off = HIGH;
-
 WiFiServer server(80);  // Inicializace webového serveru na portu 80
 
+// Funkce pro výpis souborů v LittleFS
+void listFiles() {
+    Serial.println("Výpis souborů v LittleFS:");
+    Dir dir = LittleFS.openDir("/");
+    while (dir.next()) {
+        String fileName = dir.fileName();
+        Serial.print(" - ");
+        Serial.println(fileName);
+    }
+    Serial.println("Konec výpisu souborů.");
+}
+
 void setup() {
-  Serial.begin(115200);
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, off);
-  pinMode(WATER_SENSOR_PIN, INPUT); // Nastavení pinu pro Water Level Sensor jako vstup
+    Serial.begin(115200);
+    pinMode(WATER_SENSOR_PIN, INPUT); // Nastavení pinu pro Water Level Sensor jako vstup
 
-  // Inicializace DHT senzoru
-  dht.begin();
+    // Inicializace DHT senzoru
+    dht.begin();
 
-  Serial.print("Connecting");
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("WiFi connected");
-  server.begin();  // Start serveru
-  Serial.println("Server started");
+    Serial.print("Připojuji se k WiFi");
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("WiFi připojeno");
+    server.begin();  // Spuštění serveru
+    Serial.println("Server spuštěn");
 
-  Serial.print("IP Address of network: ");  // Zobrazení IP adresy na sériovém monitoru
-  Serial.println(WiFi.localIP());
-  Serial.print("Copy and paste the following URL: http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("/");
+    Serial.print("IP adresa sítě: ");  // Zobrazení IP adresy na sériovém monitoru
+    Serial.println(WiFi.localIP());
+    Serial.print("Zkopírujte a vložte následující URL: http://");
+    Serial.print(WiFi.localIP());
+    Serial.println("/");
+
+    // Inicializace LittleFS
+    if (!LittleFS.begin()) {
+        Serial.println("Chyba při inicializaci LittleFS!");
+        return;
+    }
+    Serial.println("LittleFS inicializován.");
+
+    // Zobrazit všechny soubory v LittleFS
+    listFiles();
 }
 
 void loop() {
-  // Načtení teploty a vlhkosti z DHT senzoru
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+    // Načtení teploty a vlhkosti z DHT senzoru
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
 
-  // Kontrola, zda se data načetla správně
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Nepodařilo se načíst data ze senzoru DHT!");
-    return;
-  }
+    // Kontrola, zda se data načetla správně
+    if (isnan(temperature) || isnan(humidity)) {
+        Serial.println("Nepodařilo se načíst data ze senzoru DHT!");
+        return;
+    }
 
-  // Výpis teploty a vlhkosti na sériový monitor
-  Serial.print("Temperature: ");
-  Serial.print(temperature);
-  Serial.println(" *C");
-  
-  Serial.print("Humidity: ");
-  Serial.print(humidity);
-  Serial.println(" %");
+    // Čtení hodnoty z Water Level Sensor (analogové čtení)
+    int waterLevel = analogRead(WATER_SENSOR_PIN);
 
-  // Čtení hodnoty z Water Level Sensor (analogové čtení)
-  int waterLevel = analogRead(WATER_SENSOR_PIN);
-  Serial.print("Water Level Sensor: ");
-  Serial.println(waterLevel); // Zobrazí hodnotu mezi 0-1023
+    // Zpracování HTTP požadavků
+    WiFiClient client = server.available(); // Použití available() namísto accept()
+    if (!client) {
+        return;
+    }
 
-  delay(1000);  // Zpoždění 1 sekunda
+    Serial.println("Čekání na nového klienta");
+    while (!client.available()) {
+        delay(1);
+    }
 
-  WiFiClient client = server.available();
-  if(!client) {
-    return;
-  }
-  Serial.println("Waiting for new client");
-  while(!client.available()) {
-    delay(1);
-  }
+    // Čtení požadavku
+    String request = client.readStringUntil('\r');
+    Serial.println(request);
+    client.flush();
 
-  // Zpracování HTTP požadavků
-  String request = client.readStringUntil('\r');
-  Serial.println(request);
-  client.flush();
-
-  // Zapnutí a vypnutí LED
-  if (request.indexOf("/LEDON") != -1) {
-    digitalWrite(LED, on);  // Zapnout LED
-    state = on;
-  }
-  if (request.indexOf("/LEDOFF") != -1) {
-    digitalWrite(LED, off);  // Vypnout LED
-    state = off;
-  }
-
-  // Odpověď webového serveru
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/html");
-  client.println("");
-  client.println("<!DOCTYPE HTML>");
-  client.println("<html>");
-  client.println("<h1>ESP8266 DHT11 Sensor</h1>");
-  client.print("<p>Temperature: ");
-  client.print(temperature);
-  client.println(" &deg;C</p>");
-  client.print("<p>Humidity: ");
-  client.print(humidity);
-  client.println(" %</p>");
-
-  // Zobrazení hodnoty senzoru hladiny vody
-  client.print("<p>Hladina vody (analog): ");
-  client.print(waterLevel);
-  client.println("</p>");
-
-  client.println("<p><a href=\"/LEDON\">Turn ON LED</a></p>");
-  client.println("<p><a href=\"/LEDOFF\">Turn OFF LED</a></p>");
-  client.println("</html>");
+    // Odpověď webového serveru
+    if (request.indexOf("GET / ") != -1 || request.indexOf("GET /index.html") != -1) {
+        // Načtení obsahu index.html
+        File file = LittleFS.open("/index.html", "r");
+        if (file) {
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-Type: text/html");
+            client.println("Connection: close");
+            client.println();
+            while (file.available()) {
+                String line = file.readStringUntil('\n');
+                // Nahrazení placeholderů daty
+                line.replace("{{temperature}}", String(temperature));
+                line.replace("{{humidity}}", String(humidity));
+                line.replace("{{waterLevel}}", String(waterLevel));
+                line.replace("{{soilMoisture}}", "Načítání...");
+                client.println(line);
+            }
+            file.close();
+        } else {
+            client.println("HTTP/1.1 404 Not Found");
+            client.println("Connection: close");
+            client.println();
+            client.println("<h1>404 Not Found</h1>");
+        }
+    } else {
+        // Pro ostatní požadavky (např. na CSS nebo JavaScript)
+        if (request.indexOf("GET /styles.css") != -1) {
+            File file = LittleFS.open("/styles.css", "r");
+            if (file) {
+                client.println("HTTP/1.1 200 OK");
+                client.println("Content-Type: text/css");
+                client.println("Connection: close");
+                client.println();
+                while (file.available()) {
+                    client.write(file.read());
+                }
+                file.close();
+            }
+        } else if (request.indexOf("GET /script.js") != -1) {
+            File file = LittleFS.open("/script.js", "r");
+            if (file) {
+                client.println("HTTP/1.1 200 OK");
+                client.println("Content-Type: application/javascript");
+                client.println("Connection: close");
+                client.println();
+                while (file.available()) {
+                    client.write(file.read());
+                }
+                file.close();
+            }
+        }
+    }
 }
