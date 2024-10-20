@@ -1,13 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensor Data</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-    <h1>Data ze senzoru</h1>
-    <p>Teplota: {{temperature}} °C</p>
-    <p>Vlhkost: {{humidity}} %</p>
-    <p>Úroveň vody: {{waterLevel}} </p>
+    <div class="container">
+        <h1>Data ze senzoru</h1>
+        <div class="data">
+            <div class="card">
+                <h2>Teplota</h2>
+                <p id="temperature">{{temperature}} °C</p>
+            </div>
+            <div class="card">
+                <h2>Vlhkost</h2>
+                <p id="humidity">{{humidity}} %</p>
+            </div>
+            <div class="card">
+                <h2>Úroveň vody</h2>
+                <p id="waterLevel">{{waterLevel}}</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
