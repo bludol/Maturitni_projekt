@@ -3,8 +3,8 @@
 
 //Po vyplnění údajů přepsat jméno na password.h
 
-const char* ssid = "O2-Internet-425";     // Jméno sítě
-const char* password = "jYEHa5SX";        // Heslo
+const char* ssid = "JMENO";     // Jméno sítě
+const char* password = "HESLO";        // Heslo
 
 #endif
 
