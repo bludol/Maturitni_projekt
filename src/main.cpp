@@ -4,9 +4,10 @@
 #include <LittleFS.h>
 #include "password.h"
 
-#define DHTPIN 0         // DHT senzor je připojen na GPIO0 (D3 na Wemos D1 Mini)
+#define DHTPIN 0          // DHT senzor je připojen na GPIO0 (D3 na Wemos D1 Mini)
 #define WATER_SENSOR_PIN A0  // Pin pro analogový Water Level Sensor
-#define PUMP_PIN 2       // Pin pro spínání pumpy (GPIO2)
+#define PUMP_PIN 2        // Pin pro spínání pumpy (GPIO2)
+#define SOIL_SENSOR_PIN 13 // Digitální pin pro HW-080 přes HW-103 (GPIO15)
 
 SimpleDHT11 dht11(DHTPIN);
 
@@ -17,6 +18,7 @@ const unsigned long dhtDelay = 2000;
 float temperature = 0;
 float humidity = 0;
 bool pumpState = false; // Stav pumpy, false = vypnuto, true = zapnuto
+bool soilMoisture = false; // Stav vlhkosti půdy, false = sucho, true = vlhko
 
 void listFiles() {
     Serial.println("Výpis souborů v LittleFS:");
@@ -34,6 +36,7 @@ void setup() {
     Serial.begin(115200);
     pinMode(WATER_SENSOR_PIN, INPUT);
     pinMode(PUMP_PIN, OUTPUT); // Nastavení PUMP_PIN jako výstup
+    pinMode(SOIL_SENSOR_PIN, INPUT); // Nastavení SOIL_SENSOR_PIN jako vstup
     digitalWrite(PUMP_PIN, LOW); // Výchozí stav pumpy = vypnuto
 
     Serial.print("Připojuji se k WiFi");
@@ -81,10 +84,13 @@ void setup() {
             }
 
             int waterLevel = analogRead(WATER_SENSOR_PIN);
+            soilMoisture = digitalRead(SOIL_SENSOR_PIN); // Čtení hodnoty z digitálního senzoru vlhkosti půdy
 
+            // Záměna placeholderů za aktuální hodnoty
             response.replace("{{temperature}}", String(temperature));
             response.replace("{{humidity}}", String(humidity));
             response.replace("{{waterLevel}}", String(waterLevel));
+            response.replace("{{soilMoisture}}", soilMoisture ? "Vlhká" : "Suchá");
             response.replace("{{pumpState}}", pumpState ? "Zapnuto" : "Vypnuto");
 
             request->send(200, "text/html", response);

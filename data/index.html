@@ -22,6 +22,15 @@
                 <h2>Úroveň vody</h2>
                 <p id="waterLevel">{{waterLevel}}</p>
             </div>
+            <div class="card">
+                <h2>Vlhkost půdy</h2>
+                <p id="soilMoisture">{{soilMoisture}}</p>
+            </div>
+            <div class="card">
+                <h2>Pumpa</h2>
+                <p id="pumpState">{{pumpState}}</p>
+                <button id="togglePumpBtn">{{pumpState === 'Zapnuto' ? 'Vypnout pumpu' : 'Zapnout pumpu'}}</button>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
