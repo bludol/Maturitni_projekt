@@ -9,6 +9,7 @@
 <body>
     <div class="container">
         <h1>Data ze senzoru</h1>
+
         <div class="data">
             <div class="card">
                 <h2>Teplota</h2>
@@ -29,10 +30,25 @@
             <div class="card">
                 <h2>Pumpa</h2>
                 <p id="pumpState">{{pumpState}}</p>
-                <button id="togglePumpBtn">{{pumpState === 'Zapnuto' ? 'Vypnout pumpu' : 'Zapnout pumpu'}}</button>
             </div>
         </div>
+
+        <div class="statistics">
+            <h2>Statistiky za posledních 30 dní</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Den</th>
+                        <th>Průměrná teplota (°C)</th>
+                        <th>Průměrná vlhkost (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Tabulka bude dynamicky doplněna -->
+                    {{dailyStats}}
+                </tbody>
+            </table>
+        </div>
     </div>
-    <script src="script.js"></script>
 </body>
 </html>
