@@ -13,16 +13,3 @@ Maturitni projekt chytrý kvetinac
 - webový server s grafy
 - Předvolby pro jednotlivé květiny
 
-
-
-## konkurence:
-- https://www.instructables.com/Fyt%C3%B3-Turn-Your-Plant-Into-Pet/
-
-
-
-### poznámky
-- spiffs
-- https://www.youtube.com/watch?v=pgGpuws7f9o
-- https://www.youtube.com/watch?v=Ix3a3ThsHfA
-- https://github.com/letscontrolit/ESPEasy/tree/mega
-- https://github.com/me-no-dev/ESPAsyncWebServer/tree/master/examples
